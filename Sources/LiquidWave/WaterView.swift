@@ -5,17 +5,20 @@
 //  Created by Yuki Imai on 2025/01/06.
 //
 
-
 import SwiftUI
+
+public enum WaveFillStyle {
+    case solid(Color)
+    case gradient(Gradient)
+}
 
 public struct WaveView: View {
     // 水位（0.0 ～ 1.0）
     @Binding public var progress: CGFloat
     
-    // 波の色とグラデーション
-    public var frontColor: Color
-    public var backColor: Color
-    public var gradient: Gradient = Gradient(colors: [.blue, .cyan])
+    // 波の色
+    public var frontFillStyle: WaveFillStyle = .solid(.blue)
+    public var backFillStyle: WaveFillStyle = .solid(.cyan)
     
     // マスク画像
     public var maskImage: Image?
@@ -46,9 +49,8 @@ public struct WaveView: View {
     @State private var ripples: [Ripple] = []
     
     public init(progress: Binding<CGFloat>,
-                frontColor: Color = .blue,
-                backColor: Color = .cyan,
-                gradient: Gradient = Gradient(colors: [.blue, .cyan]),
+                frontFillStyle: WaveFillStyle = .solid(.blue),
+                backFillStyle: WaveFillStyle = .solid(.cyan),
                 maskImage: Image? = nil,
                 floatingObject: AnyView? = nil,
                 floatingObjectSize: CGSize = CGSize(width: 50, height: 50),
@@ -63,9 +65,8 @@ public struct WaveView: View {
                 waveHeight: CGFloat = 0.04,
                 waveSpeed: Double = 0.016) {
         self._progress = progress
-        self.frontColor = frontColor
-        self.backColor = backColor
-        self.gradient = gradient
+        self.frontFillStyle = frontFillStyle
+        self.backFillStyle = backFillStyle
         self.maskImage = maskImage
         self.floatingObject = floatingObject
         self.floatingObjectSize = floatingObjectSize
@@ -85,13 +86,13 @@ public struct WaveView: View {
         GeometryReader { geometry in
             ZStack {
                 WaveShape(progress: progress, waveHeight: waveHeight * 0.5, phase: phase1)
-                    .fill(LinearGradient(gradient: gradient, startPoint: .top, endPoint: .bottom))
+                    .fill(applyFillStyle(backFillStyle))
                     .opacity(0.6)
                     .frame(width: geometry.size.width, height: geometry.size.height)
                     .animation(.easeInOut(duration: 0.3), value: progress)
 
                 WaveShape(progress: progress, waveHeight: waveHeight, phase: phase2)
-                    .fill(frontColor)
+                    .fill(applyFillStyle(frontFillStyle))
                     .opacity(0.8)
                     .frame(width: geometry.size.width, height: geometry.size.height)
                     .animation(.easeInOut(duration: 0.3), value: progress)
@@ -183,6 +184,21 @@ public struct WaveView: View {
 
         DispatchQueue.main.asyncAfter(deadline: .now() + rippleDuration) {
             ripples.removeAll { $0.id == ripple.id }
+        }
+    }
+    
+    private func applyFillStyle(_ fillStyle: WaveFillStyle) -> AnyShapeStyle {
+        switch fillStyle {
+        case .solid(let color):
+            return AnyShapeStyle(color)
+        case .gradient(let gradient):
+            return AnyShapeStyle(
+                LinearGradient(
+                    gradient: gradient,
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+            )
         }
     }
 }
