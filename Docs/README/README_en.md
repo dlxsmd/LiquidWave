@@ -12,7 +12,7 @@ LiquidWave is an advanced, highly customizable wave animation library for SwiftU
 ## Installation
 ```swift
 dependencies: [
-    .package(url: "https://github.com/dlxsmd/LiquidWave.git", from: "1.0.0")
+    .package(url: "https://github.com/dlxsmd/LiquidWave.git", from: "1.2.0")
 ]
 ```
 
@@ -33,8 +33,8 @@ struct ContentView: View {
 ```swift
 WaveView(
     progress: $waterLevel,
-    frontColor: .green,
-    backColor: .blue,
+    frontFillStyle: .solid(.blue),
+    backFillStyle: .solid(.cyan),
     rippleColor: .white,
     floatingObject: AnyView(Image(systemName: "leaf.fill"))
 )
@@ -43,8 +43,8 @@ WaveView(
 ## API Reference
 ### Wave Parameters
 * `progress: Binding<CGFloat>`: Water level (0.0 - 1.0)
-* `frontColor: Color`: Foreground wave color
-* `backColor: Color`: Background wave color
+* `frontFillStyle: WaveFillStyle`: Front wave style (default: .solid(.blue))
+* `backFillStyle: WaveFillStyle`: Back wave style (default: .solid(.cyan))
 * `gradient: Gradient`: Wave color gradient (default: [.blue, .cyan])
 ### Wave Animation
 * `waveHeight: CGFloat`: Wave height (default: 0.04)
@@ -63,6 +63,13 @@ WaveView(
 * `rippleInterval: Double`: Automatic ripple generation interval (default: 3.0)
 ### Mask
 * `maskImage: Image?`: Mask image applied to the wave
+### Enum: WaveFillStyle
+```swift 
+public enum WaveFillStyle {
+    case solid(Color)
+    case gradient(Gradient)
+}
+```
 
 ## License
 MIT License

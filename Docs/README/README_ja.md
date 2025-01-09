@@ -12,7 +12,7 @@ LiquidWaveは、元の[WaveAnimationView](https://github.com/noa4021J/WaveAnimat
 ## インストール
 ```swift
 dependencies: [
-    .package(url: "https://github.com/dlxsmd/LiquidWave.git", from: "1.0.0")
+    .package(url: "https://github.com/dlxsmd/LiquidWave.git", from: "1.2.0")
 ]
 ```
 
@@ -33,8 +33,8 @@ struct ContentView: View {
 ```swift
 WaveView(
     progress: $waterLevel,
-    frontColor: .green,
-    backColor: .blue,
+    frontFillStyle: .solid(.blue),
+    backFillStyle: .solid(.cyan),
     rippleColor: .white,
     floatingObject: AnyView(Image(systemName: "leaf.fill"))
 )
@@ -43,8 +43,8 @@ WaveView(
 ## APIリファレンス
 ### 波の基本設定
 * `progress: Binding<CGFloat>`: 水位（0.0 ～ 1.0）
-* `frontColor: Color`: 前景波の色
-* `backColor: Color`: 背景波の色
+* `frontFillStyle: WaveFillStyle`: 前景波のスタイル（デフォルト: .solid(.blue)）
+* `backFillStyle: WaveFillStyle`: 背景波のスタイル（デフォルト: .solid(.cyan)）
 * `gradient: Gradient`: 波のグラデーション（デフォルト: [.blue, .cyan]）
 ### 波のアニメーション
 * `waveHeight: CGFloat`: 波の高さ（デフォルト: 0.04）
@@ -63,6 +63,13 @@ WaveView(
 * `rippleInterval: Double`: 自動波紋の生成間隔（デフォルト: 3.0）
 ### マスク
 * `maskImage: Image?`: 波に適用するマスク画像
+### 列挙型: WaveFillStyle
+```swift 
+public enum WaveFillStyle {
+    case solid(Color)
+    case gradient(Gradient)
+}
+```
 
 ## ライセンス
 MITライセンス

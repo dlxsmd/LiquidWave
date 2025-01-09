@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import Combine
 
 public enum WaveFillStyle {
     case solid(Color)
@@ -40,13 +41,15 @@ public struct WaveView: View {
     
     // 波の設定
     public var waveHeight: CGFloat = 0.04 // 波の高さ
-    public var waveSpeed: Double = 0.016 // 波の更新間隔
+    public var waveSpeed: Double = 0.016 // 波の更新間隔(60FPS)
     
     @State private var phase1: CGFloat = 0.0 // 波1の位相
     @State private var phase2: CGFloat = 0.0 // 波2の位相
     @State private var targetPhase1: CGFloat = 0.0 // 波1の目標位相
     @State private var targetPhase2: CGFloat = 0.0 // 波2の目標位相
     @State private var ripples: [Ripple] = []
+    @State private var rippleAnimationCancellable: AnyCancellable?
+    @State private var waveAnimationCancellable: AnyCancellable?
     
     public init(progress: Binding<CGFloat>,
                 frontFillStyle: WaveFillStyle = .solid(.blue),
@@ -105,7 +108,14 @@ public struct WaveView: View {
                         .frame(width: floatingObjectSize.width, height: floatingObjectSize.height)
                         .offset(y: offsetY)
                         .position(x: geometry.size.width / 2, y: positionY)
-                        .animation(.linear(duration: waveSpeed).repeatForever(autoreverses: true).speed(2.0), value: phase1)
+                        .animation(
+                            .spring(
+                                response: 0.5,
+                                dampingFraction: 0.6,
+                                blendDuration: 0.3
+                            ),
+                            value: progress
+                        )
                 }
 
                 if autoRippleEnabled || tapRippleEnabled {
@@ -137,18 +147,28 @@ public struct WaveView: View {
                     startAutoRipples(in: geometry.size)
                 }
             }
-            .onTapGesture { location in
-                if tapRippleEnabled {
-                    addRipple(at: location)
-                }
+            .onDisappear {
+                rippleAnimationCancellable?.cancel()
+                rippleAnimationCancellable = nil
+                waveAnimationCancellable?.cancel()
+                waveAnimationCancellable = nil
             }
+            .gesture(
+                DragGesture(minimumDistance: 0)
+                    .onEnded { gesture in
+                        let location = gesture.location
+                        if tapRippleEnabled {
+                            addRipple(at: location)
+                        }
+                    }
+            )
         }
     }
     
     private func smoothPhaseUpdate(_ currentPhase: CGFloat, targetPhase: CGFloat) -> CGFloat {
         return currentPhase + (targetPhase - currentPhase) * 0.1
     }
-
+    
     private func startWaveAnimation() {
         Timer.scheduledTimer(withTimeInterval: waveSpeed, repeats: true) { _ in
             Task { @MainActor in
@@ -161,18 +181,22 @@ public struct WaveView: View {
         }
     }
 
-
     private func startAutoRipples(in size: CGSize) {
-        Timer.scheduledTimer(withTimeInterval: rippleInterval, repeats: true) { _ in
-            Task { @MainActor in
+        rippleAnimationCancellable = Timer.publish(every: rippleInterval, on: .main, in: .common)
+            .autoconnect()
+            .sink { [self] _ in
                 let randomX = CGFloat.random(in: 0...size.width)
                 let randomY = CGFloat.random(in: 0...size.height * (1 - progress))
+                
                 addRipple(at: CGPoint(x: randomX, y: randomY))
             }
-        }
     }
 
     private func addRipple(at location: CGPoint) {
+        if ripples.count > 10 {
+            ripples.removeFirst()
+        }
+        
         let ripple = Ripple(center: location, color: rippleColor, progress: 0.0)
         ripples.append(ripple)
 
